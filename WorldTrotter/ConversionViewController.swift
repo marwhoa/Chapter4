@@ -8,10 +8,18 @@
 
 import UIKit
 
-class ConversionViewController: UIViewController {
+class ConversionViewController: UIViewController, UITextFieldDelegate {
     
     @IBOutlet var celsiusLabel: UILabel!
     @IBOutlet var textField: UITextField!
+    
+    let numberFormatter: NumberFormatter = {
+        let nf = NumberFormatter()
+        nf.numberStyle = .decimal
+        nf.minimumFractionDigits = 0
+        nf.maximumFractionDigits = 1
+        return nf
+    }()
     
     var f_Value: Measurement<UnitTemperature>?{
         didSet {
@@ -34,13 +42,63 @@ class ConversionViewController: UIViewController {
     {
         if let celsiusValue = celsiusValue
         {
-            celsiusLabel.text = "\(celsiusValue.value)"
+            celsiusLabel.text = numberFormatter.string(from: NSNumber(value: celsiusValue.value))
         }
         else
         {
             celsiusLabel.text = "???"
         }
     }
+    
+    /* Func textField
+     * The text field calls this method on its delegate
+     * This function prints the field's curent text, as well as the replacement string
+     *
+     */
+ 
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range : NSRange,
+                   replacementString string: String) -> Bool
+    {
+        //print("Curent text: \(textField.text)")
+        //print("Replacement text \(textField.text)")
+        let digits = NSCharacterSet.decimalDigits //range of lower and uppercase letters
+        
+        //let customSet = NSCharacterSet.decimalDigits
+        //customSet.formUnion(init(charactersIn: "))
+        
+        //below commented out to alow for Locales
+        //let existingTextHasDecimalSeparator = textField.text?.range(of: ".")
+        //let replacementTextHasDecimalSeparator = string.range(of: ".")
+        
+        let currentLocale = Locale.current
+        let decimalSeparator = currentLocale.decimalSeparator ?? "."
+        
+        let existingTextHasDecimalSeparator = textField.text?.range(of: decimalSeparator)
+        let replacementTextHasDecimalSeparator = string.range(of: decimalSeparator)
+        
+        
+        
+        
+        
+        for code in string.utf8 { print(code) }
+        //test if the range contains any letters
+        //let hasExistingLetters = textField.text?.rangeOfCharacter(from: letters)
+        let hasDigits = string.rangeOfCharacter(from: digits)
+       
+        
+        if existingTextHasDecimalSeparator != nil,
+            replacementTextHasDecimalSeparator != nil || hasDigits == nil
+            
+        {
+            return false
+        }
+        else
+        {
+            return true
+        }
+    }
+    
+    
     
     @IBAction func dismissKeyboard(_sender: UITapGestureRecognizer)
     {
@@ -51,9 +109,9 @@ class ConversionViewController: UIViewController {
     {
         //first, check is the text field has text
         //If so, check whether that text can be represented as a double
-        if let text = textField.text, let value = Double(text)
+        if let text = textField.text, let number = numberFormatter.number(from: text)
         {
-            f_Value = Measurement(value: value, unit: .fahrenheit)
+            f_Value = Measurement(value: number.doubleValue, unit: .fahrenheit)
         }
         else
         {
@@ -64,6 +122,7 @@ class ConversionViewController: UIViewController {
     override func viewDidLoad()
     {
         super.viewDidLoad()
+        print("ConversionViewController loaded its view")
         
         updateCelsiusLabel()
     }
